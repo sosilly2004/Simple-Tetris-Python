@@ -60,6 +60,6 @@ Congratulations! You have successfully set up and played the Simple Tetris game 
 
 ## Additional Resources
 - [Pygame Documentation](https://www.pygame.org/docs/)
-- [GitHub Repository](https://github.com/your-username/Simple-Tetris-Python)
+- [GitHub Repository](https://github.com/sosilly2004/Simple-Tetris-Python)
 
 Feel free to explore the repository for the Tetris code and contribute to the project if you'd like!
