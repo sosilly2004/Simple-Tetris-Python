@@ -79,6 +79,7 @@ class Tetris:
         self.level = 1
         self.fall_speed = 10
         self.soft_drop = False
+        self.try_again_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 + 50, 200, 50)
 
     def get_random_shape(self):
         return random.choice(SHAPES)
@@ -101,62 +102,71 @@ class Tetris:
         font = pygame.font.SysFont(None, 48)
         game_over_text = font.render("Game Over", True, WHITE)
         score_text = font.render(f"Score: {self.score}", True, WHITE)
-        restart_text = font.render("Press R to restart", True, WHITE)
+        restart_text = font.render("Try Again", True, WHITE)
         self.screen.blit(game_over_text, (SCREEN_WIDTH // 2 - game_over_text.get_width() // 2, SCREEN_HEIGHT // 2 - 50))
         self.screen.blit(score_text, (SCREEN_WIDTH // 2 - score_text.get_width() // 2, SCREEN_HEIGHT // 2))
-        self.screen.blit(restart_text, (SCREEN_WIDTH // 2 - restart_text.get_width() // 2, SCREEN_HEIGHT // 2 + 50))
+        pygame.draw.rect(self.screen, GRAY, self.try_again_button)
+        self.screen.blit(restart_text, (SCREEN_WIDTH // 2 - restart_text.get_width() // 2, SCREEN_HEIGHT // 2 + 60))
 
     def handle_soft_drop(self):
         if self.soft_drop:
             self.current_y += 1
 
     def run(self):
-        while not self.game_over:
-            self.clock.tick(self.fall_speed)
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.game_over = True
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_LEFT:
-                        if not self.board.is_collision(self.current_shape, self.current_x - 1, self.current_y):
-                            self.current_x -= 1
-                    elif event.key == pygame.K_RIGHT:
-                        if not self.board.is_collision(self.current_shape, self.current_x + 1, self.current_y):
-                            self.current_x += 1
-                    elif event.key == pygame.K_DOWN:
-                        self.soft_drop = True
-                    elif event.key == pygame.K_UP:
-                        rotated_shape = self.rotate_shape(self.current_shape)
-                        if not self.board.is_collision(rotated_shape, self.current_x, self.current_y):
-                            self.current_shape = rotated_shape
-                    elif event.key == pygame.K_r and self.game_over:
-                        self.__init__()  # Restart the game
-
-                elif event.type == pygame.KEYUP:
-                    if event.key == pygame.K_DOWN:
-                        self.soft_drop = False
-
-            self.handle_soft_drop()
-
-            if self.board.is_collision(self.current_shape, self.current_x, self.current_y + 1):
-                self.board.add_shape(self.current_shape, self.current_x, self.current_y)
-                self.board.remove_full_rows()
-                self.current_shape = self.get_random_shape()
-                self.current_x = BOARD_WIDTH // 2 - len(self.current_shape[0]) // 2
-                self.current_y = 0
-                if self.board.is_collision(self.current_shape, self.current_x, self.current_y):
-                    self.game_over = True
-            else:
-                self.current_y += 1
-
-            self.draw_board()
-
+        while True:
             if self.game_over:
                 self.draw_game_over_screen()
+                pygame.display.update()
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        return
+                    elif event.type == pygame.MOUSEBUTTONDOWN:
+                        mouse_pos = event.pos
+                        if self.try_again_button.collidepoint(mouse_pos):
+                            self.__init__()
+                            break
+            else:
+                self.clock.tick(self.fall_speed)
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        return
+                    elif event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_LEFT:
+                            if not self.board.is_collision(self.current_shape, self.current_x - 1, self.current_y):
+                                self.current_x -= 1
+                        elif event.key == pygame.K_RIGHT:
+                            if not self.board.is_collision(self.current_shape, self.current_x + 1, self.current_y):
+                                self.current_x += 1
+                        elif event.key == pygame.K_DOWN:
+                            self.soft_drop = True
+                        elif event.key == pygame.K_UP:
+                            rotated_shape = self.rotate_shape(self.current_shape)
+                            if not self.board.is_collision(rotated_shape, self.current_x, self.current_y):
+                                self.current_shape = rotated_shape
+                        elif event.key == pygame.K_r and self.game_over:
+                            self.__init__()  # Restart the game
+                    elif event.type == pygame.KEYUP:
+                        if event.key == pygame.K_DOWN:
+                            self.soft_drop = False
+
+                self.handle_soft_drop()
+
+                if self.board.is_collision(self.current_shape, self.current_x, self.current_y + 1):
+                    self.board.add_shape(self.current_shape, self.current_x, self.current_y)
+                    self.board.remove_full_rows()
+                    self.current_shape = self.get_random_shape()
+                    self.current_x = BOARD_WIDTH // 2 - len(self.current_shape[0]) // 2
+                    self.current_y = 0
+                    if self.board.is_collision(self.current_shape, self.current_x, self.current_y):
+                        self.game_over = True
+                else:
+                    self.current_y += 1
+
+                self.draw_board()
 
             pygame.display.update()
-
-        pygame.quit()
 
 if __name__ == "__main__":
     game = Tetris()
