@@ -45,17 +45,17 @@ class Board:
     def is_collision(self, shape, x, y):
         for row_index, row in enumerate(shape):
             for col_index, val in enumerate(row):
-                if val and (self.grid[y + row_index][x + col_index] or 
-                            x + col_index < 0 or 
+                if val and (x + col_index < 0 or 
                             x + col_index >= BOARD_WIDTH or 
-                            y + row_index >= BOARD_HEIGHT):
+                            y + row_index >= BOARD_HEIGHT or 
+                            (y + row_index >= 0 and self.grid[y + row_index][x + col_index])):
                     return True
         return False
 
     def add_shape(self, shape, x, y):
         for row_index, row in enumerate(shape):
             for col_index, val in enumerate(row):
-                if val:
+                if val and 0 <= y + row_index < BOARD_HEIGHT and 0 <= x + col_index < BOARD_WIDTH:
                     self.grid[y + row_index][x + col_index] = 1
 
     def remove_full_rows(self):
