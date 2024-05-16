@@ -12,9 +12,27 @@ TRACKING_WIDTH = int(SCREEN_WIDTH * 0.3)
 BLOCK_SIZE = 30
 BOARD_WIDTH = 10
 BOARD_HEIGHT = 20
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-GRAY = (128, 128, 128)
+WHITE = (230, 230, 230)
+BLACK = (60, 60, 60)
+GRAY = (180, 180, 180)
+PASTEL_BLUE = (132, 209, 229)
+PASTEL_GREEN = (144, 238, 144)
+PASTEL_YELLOW = (255, 255, 132)
+PASTEL_PURPLE = (221, 160, 221)
+PASTEL_PINK = (255, 182, 193)
+PASTEL_ORANGE = (255, 190, 153)
+PASTEL_TEAL = (175, 238, 238)
+
+# Colors for shapes
+SHAPE_COLORS = {
+    0: BLACK,
+    1: PASTEL_BLUE,
+    2: PASTEL_GREEN,
+    3: PASTEL_YELLOW,
+    4: PASTEL_PURPLE,
+    5: PASTEL_PINK,
+    6: PASTEL_ORANGE
+}
 
 # Shapes and their rotations
 SHAPES = [
@@ -76,6 +94,7 @@ class Tetris:
         self.tracking_area = pygame.Rect(PLAYABLE_WIDTH, 0, TRACKING_WIDTH, SCREEN_HEIGHT)
         self.board = Board()
         self.current_shape = self.get_random_shape()
+        self.next_shape = self.get_random_shape()
         self.current_x = BOARD_WIDTH // 2 - len(self.current_shape[0]) // 2
         self.current_y = 0
         self.game_over = False
@@ -92,7 +111,7 @@ class Tetris:
         return [list(row) for row in zip(*shape[::-1])]
 
     def draw_playable_area(self):
-        pygame.draw.rect(self.screen, BLACK, self.playable_area)
+        pygame.draw.rect(self.screen, WHITE, self.playable_area)
         for y, row in enumerate(self.board.grid):
             for x, val in enumerate(row):
                 if val:
@@ -100,17 +119,36 @@ class Tetris:
         for y, row in enumerate(self.current_shape):
             for x, val in enumerate(row):
                 if val:
-                    pygame.draw.rect(self.screen, WHITE, ((self.current_x + x) * BLOCK_SIZE, (self.current_y + y) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+                    pygame.draw.rect(self.screen, SHAPE_COLORS[1], ((self.current_x + x) * BLOCK_SIZE, (self.current_y + y) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+        # Draw settled pieces with their respective colors
+        for y, row in enumerate(self.board.grid):
+            for x, val in enumerate(row):
+                if val:
+                    pygame.draw.rect(self.screen, SHAPE_COLORS[1], (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
 
     def draw_tracking_area(self):
-        pygame.draw.rect(self.screen, BLACK, self.tracking_area)
-        # Add code here to draw tracking information (high score, next piece, level, etc.)
+        pygame.draw.rect(self.screen, PASTEL_YELLOW, self.tracking_area)
+        font = pygame.font.SysFont(None, 24)
+        score_text = font.render(f"Score: {self.score}", True, BLACK)
+        level_text = font.render(f"Level: {self.level}", True, BLACK)
+        next_piece_text = font.render("Next Piece:", True, BLACK)
+        self.screen.blit(score_text, (PLAYABLE_WIDTH + 10, 50))
+        self.screen.blit(level_text, (PLAYABLE_WIDTH + 10, 100))
+        self.screen.blit(next_piece_text, (PLAYABLE_WIDTH + 10, 150))
+        self.draw_shape(self.next_shape, PLAYABLE_WIDTH + 10, 200)
+
+    def draw_shape(self, shape, x, y):
+        for i, row in enumerate(shape):
+            for j, cell in enumerate(row):
+                if cell:
+                    pygame.draw.rect(self.screen, SHAPE_COLORS[1], (x + j * BLOCK_SIZE, y + i * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
 
     def draw_game_over_screen(self):
+        pygame.draw.rect(self.screen, PASTEL_PINK, self.playable_area)
         font = pygame.font.SysFont(None, 48)
-        game_over_text = font.render("Game Over", True, WHITE)
-        score_text = font.render(f"Score: {self.score}", True, WHITE)
-        restart_text = font.render("Try Again", True, WHITE)
+        game_over_text = font.render("Game Over", True, BLACK)
+        score_text = font.render(f"Score: {self.score}", True, BLACK)
+        restart_text = font.render("Try Again", True, BLACK)
         self.screen.blit(game_over_text, (PLAYABLE_WIDTH // 2 - game_over_text.get_width() // 2, SCREEN_HEIGHT // 2 - 50))
         self.screen.blit(score_text, (PLAYABLE_WIDTH // 2 - score_text.get_width() // 2, SCREEN_HEIGHT // 2))
         pygame.draw.rect(self.screen, GRAY, self.try_again_button)
@@ -165,7 +203,8 @@ class Tetris:
                 if self.board.is_collision(self.current_shape, self.current_x, self.current_y + 1):
                     self.board.add_shape(self.current_shape, self.current_x, self.current_y)
                     self.board.remove_full_rows()
-                    self.current_shape = self.get_random_shape()
+                    self.current_shape = self.next_shape
+                    self.next_shape = self.get_random_shape()
                     self.current_x = BOARD_WIDTH // 2 - len(self.current_shape[0]) // 2
                     self.current_y = 0
                     if self.board.is_collision(self.current_shape, self.current_x, self.current_y):
