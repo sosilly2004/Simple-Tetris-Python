@@ -12,6 +12,7 @@ BOARD_WIDTH = 10
 BOARD_HEIGHT = 20
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+GRAY = (128, 128, 128)
 
 # Shapes and their rotations
 SHAPES = [
@@ -39,11 +40,9 @@ SHAPES = [
 # Tetris board class
 class Board:
     def __init__(self):
-        # Initialize the game board grid
         self.grid = [[0] * BOARD_WIDTH for _ in range(BOARD_HEIGHT)]
 
     def is_collision(self, shape, x, y):
-        # Check if the given shape collides with any existing blocks or borders
         for row_index, row in enumerate(shape):
             for col_index, val in enumerate(row):
                 if val and (self.grid[y + row_index][x + col_index] or 
@@ -54,14 +53,12 @@ class Board:
         return False
 
     def add_shape(self, shape, x, y):
-        # Add the given shape to the game board grid
         for row_index, row in enumerate(shape):
             for col_index, val in enumerate(row):
                 if val:
                     self.grid[y + row_index][x + col_index] = 1
 
     def remove_full_rows(self):
-        # Remove any full rows from the game board
         rows_to_remove = [i for i, row in enumerate(self.grid) if all(row)]
         for row_index in rows_to_remove:
             del self.grid[row_index]
@@ -70,7 +67,6 @@ class Board:
 # Tetris game class
 class Tetris:
     def __init__(self):
-        # Initialize the game window, clock, board, and current shape
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption("Tetris")
         self.clock = pygame.time.Clock()
@@ -79,36 +75,48 @@ class Tetris:
         self.current_x = BOARD_WIDTH // 2 - len(self.current_shape[0]) // 2
         self.current_y = 0
         self.game_over = False
+        self.score = 0
+        self.level = 1
+        self.fall_speed = 10
+        self.soft_drop = False
 
     def get_random_shape(self):
-        # Return a random shape from the predefined shapes
         return random.choice(SHAPES)
 
     def rotate_shape(self, shape):
-        # Rotate the given shape
         return [list(row) for row in zip(*shape[::-1])]
 
     def draw_board(self):
-        # Draw the game board and the current falling shape
         self.screen.fill(BLACK)
         for y, row in enumerate(self.board.grid):
             for x, val in enumerate(row):
                 if val:
-                    pygame.draw.rect(self.screen, WHITE, (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+                    pygame.draw.rect(self.screen, GRAY, (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
         for y, row in enumerate(self.current_shape):
             for x, val in enumerate(row):
                 if val:
                     pygame.draw.rect(self.screen, WHITE, ((self.current_x + x) * BLOCK_SIZE, (self.current_y + y) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
-    
+
+    def draw_game_over_screen(self):
+        font = pygame.font.SysFont(None, 48)
+        game_over_text = font.render("Game Over", True, WHITE)
+        score_text = font.render(f"Score: {self.score}", True, WHITE)
+        restart_text = font.render("Press R to restart", True, WHITE)
+        self.screen.blit(game_over_text, (SCREEN_WIDTH // 2 - game_over_text.get_width() // 2, SCREEN_HEIGHT // 2 - 50))
+        self.screen.blit(score_text, (SCREEN_WIDTH // 2 - score_text.get_width() // 2, SCREEN_HEIGHT // 2))
+        self.screen.blit(restart_text, (SCREEN_WIDTH // 2 - restart_text.get_width() // 2, SCREEN_HEIGHT // 2 + 50))
+
+    def handle_soft_drop(self):
+        if self.soft_drop:
+            self.current_y += 1
+
     def run(self):
-        # Main game loop
         while not self.game_over:
-            self.clock.tick(10)
+            self.clock.tick(self.fall_speed)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.game_over = True
                 elif event.type == pygame.KEYDOWN:
-                    # Handle user input for moving and rotating the current shape
                     if event.key == pygame.K_LEFT:
                         if not self.board.is_collision(self.current_shape, self.current_x - 1, self.current_y):
                             self.current_x -= 1
@@ -116,14 +124,20 @@ class Tetris:
                         if not self.board.is_collision(self.current_shape, self.current_x + 1, self.current_y):
                             self.current_x += 1
                     elif event.key == pygame.K_DOWN:
-                        if not self.board.is_collision(self.current_shape, self.current_x, self.current_y + 1):
-                            self.current_y += 1
+                        self.soft_drop = True
                     elif event.key == pygame.K_UP:
                         rotated_shape = self.rotate_shape(self.current_shape)
                         if not self.board.is_collision(rotated_shape, self.current_x, self.current_y):
                             self.current_shape = rotated_shape
+                    elif event.key == pygame.K_r and self.game_over:
+                        self.__init__()  # Restart the game
 
-            # Move the current shape down and handle collisions
+                elif event.type == pygame.KEYUP:
+                    if event.key == pygame.K_DOWN:
+                        self.soft_drop = False
+
+            self.handle_soft_drop()
+
             if self.board.is_collision(self.current_shape, self.current_x, self.current_y + 1):
                 self.board.add_shape(self.current_shape, self.current_x, self.current_y)
                 self.board.remove_full_rows()
@@ -135,13 +149,15 @@ class Tetris:
             else:
                 self.current_y += 1
 
-            # Draw the game board
             self.draw_board()
+
+            if self.game_over:
+                self.draw_game_over_screen()
+
             pygame.display.update()
 
         pygame.quit()
 
 if __name__ == "__main__":
-    # Start the game
     game = Tetris()
     game.run()
