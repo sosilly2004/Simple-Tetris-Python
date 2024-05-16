@@ -7,6 +7,8 @@ pygame.init()
 # Constants
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
+PLAYABLE_WIDTH = int(SCREEN_WIDTH * 0.7)
+TRACKING_WIDTH = int(SCREEN_WIDTH * 0.3)
 BLOCK_SIZE = 30
 BOARD_WIDTH = 10
 BOARD_HEIGHT = 20
@@ -70,6 +72,8 @@ class Tetris:
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption("Tetris")
         self.clock = pygame.time.Clock()
+        self.playable_area = pygame.Rect(0, 0, PLAYABLE_WIDTH, SCREEN_HEIGHT)
+        self.tracking_area = pygame.Rect(PLAYABLE_WIDTH, 0, TRACKING_WIDTH, SCREEN_HEIGHT)
         self.board = Board()
         self.current_shape = self.get_random_shape()
         self.current_x = BOARD_WIDTH // 2 - len(self.current_shape[0]) // 2
@@ -79,7 +83,7 @@ class Tetris:
         self.level = 1
         self.fall_speed = 10
         self.soft_drop = False
-        self.try_again_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 + 50, 200, 50)
+        self.try_again_button = pygame.Rect(PLAYABLE_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 + 50, 200, 50)
 
     def get_random_shape(self):
         return random.choice(SHAPES)
@@ -87,8 +91,8 @@ class Tetris:
     def rotate_shape(self, shape):
         return [list(row) for row in zip(*shape[::-1])]
 
-    def draw_board(self):
-        self.screen.fill(BLACK)
+    def draw_playable_area(self):
+        pygame.draw.rect(self.screen, BLACK, self.playable_area)
         for y, row in enumerate(self.board.grid):
             for x, val in enumerate(row):
                 if val:
@@ -98,15 +102,19 @@ class Tetris:
                 if val:
                     pygame.draw.rect(self.screen, WHITE, ((self.current_x + x) * BLOCK_SIZE, (self.current_y + y) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
 
+    def draw_tracking_area(self):
+        pygame.draw.rect(self.screen, BLACK, self.tracking_area)
+        # Add code here to draw tracking information (high score, next piece, level, etc.)
+
     def draw_game_over_screen(self):
         font = pygame.font.SysFont(None, 48)
         game_over_text = font.render("Game Over", True, WHITE)
         score_text = font.render(f"Score: {self.score}", True, WHITE)
         restart_text = font.render("Try Again", True, WHITE)
-        self.screen.blit(game_over_text, (SCREEN_WIDTH // 2 - game_over_text.get_width() // 2, SCREEN_HEIGHT // 2 - 50))
-        self.screen.blit(score_text, (SCREEN_WIDTH // 2 - score_text.get_width() // 2, SCREEN_HEIGHT // 2))
+        self.screen.blit(game_over_text, (PLAYABLE_WIDTH // 2 - game_over_text.get_width() // 2, SCREEN_HEIGHT // 2 - 50))
+        self.screen.blit(score_text, (PLAYABLE_WIDTH // 2 - score_text.get_width() // 2, SCREEN_HEIGHT // 2))
         pygame.draw.rect(self.screen, GRAY, self.try_again_button)
-        self.screen.blit(restart_text, (SCREEN_WIDTH // 2 - restart_text.get_width() // 2, SCREEN_HEIGHT // 2 + 60))
+        self.screen.blit(restart_text, (PLAYABLE_WIDTH // 2 - restart_text.get_width() // 2, SCREEN_HEIGHT // 2 + 60))
 
     def handle_soft_drop(self):
         if self.soft_drop:
@@ -115,6 +123,7 @@ class Tetris:
     def run(self):
         while True:
             if self.game_over:
+                self.draw_playable_area()
                 self.draw_game_over_screen()
                 pygame.display.update()
                 for event in pygame.event.get():
@@ -164,7 +173,8 @@ class Tetris:
                 else:
                     self.current_y += 1
 
-                self.draw_board()
+                self.draw_playable_area()
+                self.draw_tracking_area()
 
             pygame.display.update()
 
