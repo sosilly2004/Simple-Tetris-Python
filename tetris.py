@@ -15,24 +15,23 @@ BOARD_HEIGHT = 20
 WHITE = (230, 230, 230)
 BLACK = (60, 60, 60)
 GRAY = (180, 180, 180)
+PASTEL_YELLOW = (255, 255, 153)
 PASTEL_BLUE = (132, 209, 229)
 PASTEL_GREEN = (144, 238, 144)
-PASTEL_YELLOW = (255, 255, 132)
 PASTEL_PURPLE = (221, 160, 221)
 PASTEL_PINK = (255, 182, 193)
 PASTEL_ORANGE = (255, 190, 153)
 PASTEL_TEAL = (175, 238, 238)
 
-# Colors for shapes
-SHAPE_COLORS = {
-    0: BLACK,
-    1: PASTEL_BLUE,
-    2: PASTEL_GREEN,
-    3: PASTEL_YELLOW,
-    4: PASTEL_PURPLE,
-    5: PASTEL_PINK,
-    6: PASTEL_ORANGE
-}
+# Colors for shapes (excluding PASTEL_YELLOW)
+SHAPE_COLORS = [
+    PASTEL_BLUE,
+    PASTEL_GREEN,
+    PASTEL_PURPLE,
+    PASTEL_PINK,
+    PASTEL_ORANGE,
+    PASTEL_TEAL
+]
 
 # Shapes and their rotations
 SHAPES = [
@@ -72,11 +71,11 @@ class Board:
                     return True
         return False
 
-    def add_shape(self, shape, x, y):
+    def add_shape(self, shape, x, y, color):
         for row_index, row in enumerate(shape):
             for col_index, val in enumerate(row):
                 if val and 0 <= y + row_index < BOARD_HEIGHT and 0 <= x + col_index < BOARD_WIDTH:
-                    self.grid[y + row_index][x + col_index] = 1
+                    self.grid[y + row_index][x + col_index] = color
 
     def remove_full_rows(self):
         rows_to_remove = [i for i, row in enumerate(self.grid) if all(row)]
@@ -95,6 +94,8 @@ class Tetris:
         self.board = Board()
         self.current_shape = self.get_random_shape()
         self.next_shape = self.get_random_shape()
+        self.current_color = self.get_random_color()
+        self.next_color = self.get_random_color()
         self.current_x = BOARD_WIDTH // 2 - len(self.current_shape[0]) // 2
         self.current_y = 0
         self.game_over = False
@@ -107,6 +108,9 @@ class Tetris:
     def get_random_shape(self):
         return random.choice(SHAPES)
 
+    def get_random_color(self):
+        return random.choice(SHAPE_COLORS)
+
     def rotate_shape(self, shape):
         return [list(row) for row in zip(*shape[::-1])]
 
@@ -115,16 +119,11 @@ class Tetris:
         for y, row in enumerate(self.board.grid):
             for x, val in enumerate(row):
                 if val:
-                    pygame.draw.rect(self.screen, GRAY, (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+                    pygame.draw.rect(self.screen, val, (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
         for y, row in enumerate(self.current_shape):
             for x, val in enumerate(row):
                 if val:
-                    pygame.draw.rect(self.screen, SHAPE_COLORS[1], ((self.current_x + x) * BLOCK_SIZE, (self.current_y + y) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
-        # Draw settled pieces with their respective colors
-        for y, row in enumerate(self.board.grid):
-            for x, val in enumerate(row):
-                if val:
-                    pygame.draw.rect(self.screen, SHAPE_COLORS[1], (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+                    pygame.draw.rect(self.screen, self.current_color, ((self.current_x + x) * BLOCK_SIZE, (self.current_y + y) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
 
     def draw_tracking_area(self):
         pygame.draw.rect(self.screen, PASTEL_YELLOW, self.tracking_area)
@@ -135,13 +134,13 @@ class Tetris:
         self.screen.blit(score_text, (PLAYABLE_WIDTH + 10, 50))
         self.screen.blit(level_text, (PLAYABLE_WIDTH + 10, 100))
         self.screen.blit(next_piece_text, (PLAYABLE_WIDTH + 10, 150))
-        self.draw_shape(self.next_shape, PLAYABLE_WIDTH + 10, 200)
+        self.draw_shape(self.next_shape, PLAYABLE_WIDTH + 10, 200, self.next_color)
 
-    def draw_shape(self, shape, x, y):
+    def draw_shape(self, shape, x, y, color):
         for i, row in enumerate(shape):
             for j, cell in enumerate(row):
                 if cell:
-                    pygame.draw.rect(self.screen, SHAPE_COLORS[1], (x + j * BLOCK_SIZE, y + i * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+                    pygame.draw.rect(self.screen, color, (x + j * BLOCK_SIZE, y + i * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
 
     def draw_game_over_screen(self):
         pygame.draw.rect(self.screen, PASTEL_PINK, self.playable_area)
@@ -201,10 +200,12 @@ class Tetris:
                 self.handle_soft_drop()
 
                 if self.board.is_collision(self.current_shape, self.current_x, self.current_y + 1):
-                    self.board.add_shape(self.current_shape, self.current_x, self.current_y)
+                    self.board.add_shape(self.current_shape, self.current_x, self.current_y, self.current_color)
                     self.board.remove_full_rows()
                     self.current_shape = self.next_shape
+                    self.current_color = self.next_color
                     self.next_shape = self.get_random_shape()
+                    self.next_color = self.get_random_color()
                     self.current_x = BOARD_WIDTH // 2 - len(self.current_shape[0]) // 2
                     self.current_y = 0
                     if self.board.is_collision(self.current_shape, self.current_x, self.current_y):
