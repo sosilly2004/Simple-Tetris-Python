@@ -104,6 +104,8 @@ class Tetris:
         self.fall_speed = 10
         self.soft_drop = False
         self.try_again_button = pygame.Rect(PLAYABLE_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 + 50, 200, 50)
+        self.splash_screen = True
+        self.play_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2, 200, 50)
 
     def get_random_shape(self):
         return random.choice(SHAPES)
@@ -153,13 +155,33 @@ class Tetris:
         pygame.draw.rect(self.screen, GRAY, self.try_again_button)
         self.screen.blit(restart_text, (PLAYABLE_WIDTH // 2 - restart_text.get_width() // 2, SCREEN_HEIGHT // 2 + 60))
 
+    def draw_splash_screen(self):
+        self.screen.fill(PASTEL_BLUE)
+        font = pygame.font.SysFont(None, 72)
+        title_text = font.render("Tetris", True, BLACK)
+        self.screen.blit(title_text, (SCREEN_WIDTH // 2 - title_text.get_width() // 2, SCREEN_HEIGHT // 2 - 150))
+        pygame.draw.rect(self.screen, PASTEL_GREEN, self.play_button)
+        play_text = font.render("Play", True, BLACK)
+        self.screen.blit(play_text, (self.play_button.x + (self.play_button.width - play_text.get_width()) // 2, self.play_button.y + (self.play_button.height - play_text.get_height()) // 2))
+
     def handle_soft_drop(self):
         if self.soft_drop:
             self.current_y += 1
 
     def run(self):
         while True:
-            if self.game_over:
+            if self.splash_screen:
+                self.draw_splash_screen()
+                pygame.display.update()
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        return
+                    elif event.type == pygame.MOUSEBUTTONDOWN:
+                        mouse_pos = event.pos
+                        if self.play_button.collidepoint(mouse_pos):
+                            self.splash_screen = False
+            elif self.game_over:
                 self.draw_playable_area()
                 self.draw_game_over_screen()
                 pygame.display.update()
@@ -171,6 +193,7 @@ class Tetris:
                         mouse_pos = event.pos
                         if self.try_again_button.collidepoint(mouse_pos):
                             self.__init__()
+                            self.splash_screen = False
                             break
             else:
                 self.clock.tick(self.fall_speed)
@@ -193,6 +216,8 @@ class Tetris:
                                 self.current_shape = rotated_shape
                         elif event.key == pygame.K_r and self.game_over:
                             self.__init__()  # Restart the game
+                            self.splash_screen = False
+
                     elif event.type == pygame.KEYUP:
                         if event.key == pygame.K_DOWN:
                             self.soft_drop = False
@@ -216,7 +241,7 @@ class Tetris:
                 self.draw_playable_area()
                 self.draw_tracking_area()
 
-            pygame.display.update()
+                pygame.display.update()
 
 if __name__ == "__main__":
     game = Tetris()
