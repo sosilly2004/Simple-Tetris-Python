@@ -15,7 +15,6 @@ BOARD_HEIGHT = 20
 WHITE = (230, 230, 230)
 BLACK = (60, 60, 60)
 GRAY = (180, 180, 180)
-PASTEL_YELLOW = (255, 255, 153)
 PASTEL_BLUE = (132, 209, 229)
 PASTEL_GREEN = (144, 238, 144)
 PASTEL_PURPLE = (221, 160, 221)
@@ -23,7 +22,7 @@ PASTEL_PINK = (255, 182, 193)
 PASTEL_ORANGE = (255, 190, 153)
 PASTEL_TEAL = (175, 238, 238)
 
-# Colors for shapes (excluding PASTEL_YELLOW)
+# Colors for shapes
 SHAPE_COLORS = [
     PASTEL_BLUE,
     PASTEL_GREEN,
@@ -94,8 +93,8 @@ class Tetris:
         self.board = Board()
         self.current_shape = self.get_random_shape()
         self.next_shape = self.get_random_shape()
-        self.current_color = self.get_random_color()
-        self.next_color = self.get_random_color()
+        self.current_color = self.get_color_for_shape(self.current_shape)
+        self.next_color = self.get_color_for_shape(self.next_shape)
         self.current_x = BOARD_WIDTH // 2 - len(self.current_shape[0]) // 2
         self.current_y = 0
         self.game_over = False
@@ -110,8 +109,9 @@ class Tetris:
     def get_random_shape(self):
         return random.choice(SHAPES)
 
-    def get_random_color(self):
-        return random.choice(SHAPE_COLORS)
+    def get_color_for_shape(self, shape):
+        shape_index = SHAPES.index(shape)
+        return SHAPE_COLORS[shape_index % len(SHAPE_COLORS)]
 
     def rotate_shape(self, shape):
         return [list(row) for row in zip(*shape[::-1])]
@@ -215,7 +215,7 @@ class Tetris:
                             if not self.board.is_collision(rotated_shape, self.current_x, self.current_y):
                                 self.current_shape = rotated_shape
                         elif event.key == pygame.K_r and self.game_over:
-                            self.__init__()  # Restart the game
+                            self.__init__()
                             self.splash_screen = False
 
                     elif event.type == pygame.KEYUP:
@@ -230,7 +230,7 @@ class Tetris:
                     self.current_shape = self.next_shape
                     self.current_color = self.next_color
                     self.next_shape = self.get_random_shape()
-                    self.next_color = self.get_random_color()
+                    self.next_color = self.get_color_for_shape(self.next_shape)
                     self.current_x = BOARD_WIDTH // 2 - len(self.current_shape[0]) // 2
                     self.current_y = 0
                     if self.board.is_collision(self.current_shape, self.current_x, self.current_y):
