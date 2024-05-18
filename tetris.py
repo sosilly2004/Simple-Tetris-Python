@@ -22,6 +22,7 @@ PASTEL_PINK = (255, 182, 193)
 PASTEL_ORANGE = (255, 190, 153)
 PASTEL_TEAL = (175, 238, 238)
 PASTEL_RED = (255, 105, 97)
+PASTEL_SIDEBAR = (172, 225, 175)  # #ACE1AF
 
 # Colors for shapes
 SHAPE_COLORS = [
@@ -130,7 +131,7 @@ class Tetris:
                     pygame.draw.rect(self.screen, self.current_color, ((self.current_x + x) * BLOCK_SIZE, (self.current_y + y) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
 
     def draw_tracking_area(self):
-        pygame.draw.rect(self.screen, PASTEL_BLUE, self.tracking_area)
+        pygame.draw.rect(self.screen, PASTEL_SIDEBAR, self.tracking_area)
         font = pygame.font.SysFont(None, 24)
         score_text = font.render(f"Score: {self.score}", True, BLACK)
         level_text = font.render(f"Level: {self.level}", True, BLACK)
