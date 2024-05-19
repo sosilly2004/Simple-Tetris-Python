@@ -27,7 +27,6 @@ Once you have Python and Pygame installed, you can run the Simple Tetris game by
      ```
      git clone https://github.com/sosilly2004/Simple-Tetris-Python.git
      ```
-   - Replace `your-username` with your GitHub username.
 
 2. **Navigate to the Repository:**
    - Open a terminal or command prompt.
