@@ -1,5 +1,3 @@
-# Getting Started with Simple Tetris Game in Python
-
 ## Introduction
 Welcome to the step-by-step guide on running and playing the Simple Tetris game implemented in Python! In this guide, you'll learn how to set up and run the game on your local machine using Python and Pygame.
 
@@ -27,7 +25,7 @@ Once you have Python and Pygame installed, you can run the Simple Tetris game by
 1. **Clone the Repository:**
    - Clone the GitHub repository containing the Tetris code to your local machine. Use the following command:
      ```
-     git clone https://github.com/your-username/Simple-Tetris-Python.git
+     git clone https://github.com/sosilly2004/Simple-Tetris-Python.git
      ```
    - Replace `your-username` with your GitHub username.
 
