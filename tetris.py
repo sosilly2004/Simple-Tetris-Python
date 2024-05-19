@@ -66,11 +66,14 @@ class Board:
     def is_collision(self, shape, x, y):
         for row_index, row in enumerate(shape):
             for col_index, val in enumerate(row):
-                if val and (x + col_index < 0 or 
-                            x + col_index >= BOARD_WIDTH or 
-                            y + row_index >= BOARD_HEIGHT or 
-                            (y + row_index >= 0 and self.grid[y + row_index][x + col_index])):
-                    return True
+                if val:
+                    if (
+                        x + col_index < 0 or
+                        x + col_index >= BOARD_WIDTH or
+                        y + row_index >= BOARD_HEIGHT or
+                        (y + row_index >= 0 and self.grid[y + row_index][x + col_index])
+                    ):
+                        return True
         return False
 
     def add_shape(self, shape, x, y, color):
@@ -84,6 +87,7 @@ class Board:
         for row_index in rows_to_remove:
             del self.grid[row_index]
             self.grid.insert(0, [0] * BOARD_WIDTH)
+        return len(rows_to_remove)
 
 # Tetris game class
 class Tetris:
@@ -120,15 +124,18 @@ class Tetris:
         return [list(row) for row in zip(*shape[::-1])]
 
     def draw_playable_area(self):
-        pygame.draw.rect(self.screen, WHITE, self.playable_area)
+        self.screen.fill(BLACK, self.playable_area)
+        pygame.draw.rect(self.screen, WHITE, self.playable_area, 1)
         for y, row in enumerate(self.board.grid):
             for x, val in enumerate(row):
                 if val:
                     pygame.draw.rect(self.screen, val, (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+                    pygame.draw.rect(self.screen, BLACK, (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE), 1)
         for y, row in enumerate(self.current_shape):
             for x, val in enumerate(row):
                 if val:
                     pygame.draw.rect(self.screen, self.current_color, ((self.current_x + x) * BLOCK_SIZE, (self.current_y + y) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+                    pygame.draw.rect(self.screen, BLACK, ((self.current_x + x) * BLOCK_SIZE, (self.current_y + y) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE), 1)
 
     def draw_tracking_area(self):
         pygame.draw.rect(self.screen, PASTEL_SIDEBAR, self.tracking_area)
@@ -146,6 +153,7 @@ class Tetris:
             for j, cell in enumerate(row):
                 if cell:
                     pygame.draw.rect(self.screen, color, (x + j * BLOCK_SIZE, y + i * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+                    pygame.draw.rect(self.screen, BLACK, (x + j * BLOCK_SIZE, y + i * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE), 1)
 
     def draw_game_over_screen(self):
         pygame.draw.rect(self.screen, PASTEL_PINK, self.playable_area)
@@ -181,11 +189,9 @@ class Tetris:
                         pygame.quit()
                         return
                     elif event.type == pygame.MOUSEBUTTONDOWN:
-                        mouse_pos = event.pos
-                        if self.play_button.collidepoint(mouse_pos):
+                        if self.play_button.collidepoint(event.pos):
                             self.splash_screen = False
             elif self.game_over:
-                self.draw_playable_area()
                 self.draw_game_over_screen()
                 pygame.display.update()
                 for event in pygame.event.get():
@@ -193,11 +199,9 @@ class Tetris:
                         pygame.quit()
                         return
                     elif event.type == pygame.MOUSEBUTTONDOWN:
-                        mouse_pos = event.pos
-                        if self.try_again_button.collidepoint(mouse_pos):
+                        if self.try_again_button.collidepoint(event.pos):
                             self.__init__()
                             self.splash_screen = False
-                            break
             else:
                 self.clock.tick(self.fall_speed)
                 for event in pygame.event.get():
@@ -220,7 +224,6 @@ class Tetris:
                         elif event.key == pygame.K_r and self.game_over:
                             self.__init__()
                             self.splash_screen = False
-
                     elif event.type == pygame.KEYUP:
                         if event.key == pygame.K_DOWN:
                             self.soft_drop = False
@@ -229,7 +232,10 @@ class Tetris:
 
                 if self.board.is_collision(self.current_shape, self.current_x, self.current_y + 1):
                     self.board.add_shape(self.current_shape, self.current_x, self.current_y, self.current_color)
-                    self.board.remove_full_rows()
+                    rows_removed = self.board.remove_full_rows()
+                    self.score += rows_removed * 100
+                    self.level = self.score // 1000 + 1
+                    self.fall_speed = max(1, 10 - self.level)
                     self.current_shape = self.next_shape
                     self.current_color = self.next_color
                     self.next_shape = self.get_random_shape()
